@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsPortal-Demo · Co-Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --md-red-bg: #B3261E;
+            --md-blue-primary: #1A56DB;
+            --md-blue-dark: #0B3B8C;
+            --surface: #F1F3F7;
+            --surface-2: #E9ECF2;
+            --border-soft: #D7DCE5;
+        }
+
+        body {
+            -webkit-font-smoothing: antialiased;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .elev-1 { box-shadow: 0 1px 2px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.10); }
+        .elev-2 { box-shadow: 0 2px 4px rgba(0,0,0,.16), 0 1px 6px rgba(0,0,0,.10); }
+        .elev-3 { box-shadow: 0 4px 8px rgba(0,0,0,.18), 0 2px 12px rgba(0,0,0,.12); }
+        .elev-4 { box-shadow: 0 8px 16px rgba(0,0,0,.22), 0 4px 20px rgba(0,0,0,.14); }
+
+        .card-dim {
+            background-color: var(--surface);
+            border: 1px solid var(--border-soft);
+        }
+
+        .stat-card {
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease;
+            background-color: var(--surface);
+            border: 1px solid var(--border-soft);
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            background-color: #ECEEF4;
+            box-shadow: 0 8px 20px rgba(0,0,0,.24), 0 4px 24px rgba(0,0,0,.16);
+            border-color: #1A56DB;
+        }
+
+        .sparkline { height: 40px; width: 100%; }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: .5; transform: scale(1.4); }
+        }
+        .live-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn .4s ease forwards; }
+
+        .activity-dup {
+            background: linear-gradient(90deg, rgba(217,119,6,.10), rgba(217,119,6,.04));
+            border-left: 3px solid #D97706;
+            padding-left: .5rem;
+            border-radius: .375rem;
+        }
+
+        .comment-dup {
+            background: linear-gradient(90deg, rgba(217,119,6,.09), rgba(217,119,6,.03));
+            border-color: #FCD34D !important;
+        }
+
+        @keyframes badgePop {
+            0%   { transform: scale(.6); opacity: 0; }
+            70%  { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .count-badge { animation: badgePop .5s ease forwards; }
+
+        .md-btn {
+            position: relative; overflow: hidden;
+            transition: box-shadow .18s ease, transform .12s ease, background-color .18s ease;
+        }
+        .md-btn:hover { transform: translateY(-1px); }
+        .md-btn:active { transform: translateY(0); }
+        .md-btn::after {
+            content: ""; position: absolute; inset: 0;
+            background: white; opacity: 0; transition: opacity .2s ease;
+        }
+        .md-btn:active::after { opacity: .15; transition: none; }
+
+        /* Logout button — slightly warmer red for destructive action */
+        .logout-btn {
+            background-color: rgba(220, 38, 38, 0.85);
+            border: 1px solid rgba(254, 202, 202, 0.55);
+            transition: background-color .18s ease, transform .12s ease, box-shadow .18s ease;
+        }
+        .logout-btn:hover {
+            background-color: rgba(185, 28, 28, 0.95);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.25);
+        }
+        .logout-btn:active { transform: translateY(0); }
+
+        .author-remove {
+            opacity: 0;
+            transition: opacity .15s ease, color .15s ease, background-color .15s ease;
+        }
+        .author-row:hover .author-remove { opacity: 1; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: rgba(11,59,140,.45); border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+    </style>
+</head>
+
+<body class="min-h-screen text-slate-800"
+      style="background-color: var(--md-red-bg);
+             background-image:
+                radial-gradient(ellipse at top, rgba(255,255,255,.10), transparent 55%),
+                radial-gradient(ellipse at bottom, rgba(0,0,0,.20), transparent 60%);">
+
+    <main class="max-w-7xl mx-auto p-5 sm:p-8">
+
+        <!-- ===== Header row ===== -->
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+            <div>
+                <p class="text-xs font-bold tracking-widest text-blue-100/90 mb-2 uppercase flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 live-dot"></span>
+                    NewsPortal-Demo / Control Center
+                </p>
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm">
+                    Co-Admin Dashboard
+                </h1>
+                <p class="text-blue-50/90 mt-1">Live newsroom metrics, activity &amp; system health.</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="refreshBtn"
+                        class="md-btn px-4 py-2 rounded-full bg-white/10 border border-white/30 text-sm font-semibold text-white
+                               hover:bg-white/20 hover:border-white/50">
+                    ↻ Refresh
+                </button>
+                <button id="exportBtn"
+                        class="md-btn px-4 py-2 rounded-full bg-[#E9ECF2] text-[#0B3B8C] text-sm font-bold elev-2 hover:elev-3
+                               border border-[#D7DCE5]">
+                    ↓ Export
+                </button>
+
+                <!-- REAL DJANGO LOGOUT FORM -->
+              <form method="post" action="{% url 'coadmin:logout' %}" class="inline">
+    {% csrf_token %}
+    <button type="submit"
+            class="logout-btn px-4 py-2 rounded-full text-sm font-semibold text-white
+                   focus:outline-none focus:ring-2 focus:ring-white/40">
+        ⎋ Logout
+    </button>
+</form>
+            </div>
+        </div>
+
+        <!-- ===== KPI Stat Cards ===== -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+            <div class="stat-card rounded-2xl p-5 elev-2">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#1A56DB]"></span>
+                        <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Authors</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50/80 px-1.5 py-0.5 rounded">+12%</span>
+                </div>
+                <h2 id="statAuthors" class="text-4xl font-extrabold text-[#0B3B8C] tracking-tight counter" data-target="{{ stats.authors|default:48 }}">{{ stats.authors|default:0 }}</h2>
+                <svg class="sparkline mt-2" viewBox="0 0 100 40" preserveAspectRatio="none">
+                    <polyline points="0,30 12,26 24,28 36,20 48,22 60,14 72,18 84,10 100,8"
+                              fill="none" stroke="#1A56DB" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div class="stat-card rounded-2xl p-5 elev-2">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#1A56DB]"></span>
+                        <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Articles</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50/80 px-1.5 py-0.5 rounded">+8%</span>
+                </div>
+                <h2 class="text-4xl font-extrabold text-[#0B3B8C] tracking-tight counter" data-target="{{ stats.articles|default:1247 }}">{{ stats.articles|default:0 }}</h2>
+                <svg class="sparkline mt-2" viewBox="0 0 100 40" preserveAspectRatio="none">
+                    <polyline points="0,34 12,30 24,24 36,26 48,18 60,16 72,12 84,14 100,6"
+                              fill="none" stroke="#1A56DB" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div class="stat-card rounded-2xl p-5 elev-2">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Pending</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-amber-600 bg-amber-50/80 px-1.5 py-0.5 rounded">Needs attention</span>
+                </div>
+                <h2 class="text-4xl font-extrabold text-amber-600 tracking-tight counter" data-target="{{ stats.pending|default:17 }}">{{ stats.pending|default:0 }}</h2>
+                <svg class="sparkline mt-2" viewBox="0 0 100 40" preserveAspectRatio="none">
+                    <polyline points="0,20 12,24 24,18 36,28 48,22 60,30 72,24 84,32 100,26"
+                              fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div class="stat-card rounded-2xl p-5 elev-2">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Published</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50/80 px-1.5 py-0.5 rounded">+21%</span>
+                </div>
+                <h2 class="text-4xl font-extrabold text-emerald-600 tracking-tight counter" data-target="{{ stats.published|default:1198 }}">{{ stats.published|default:0 }}</h2>
+                <svg class="sparkline mt-2" viewBox="0 0 100 40" preserveAspectRatio="none">
+                    <polyline points="0,32 12,28 24,22 36,24 48,16 60,14 72,10 84,12 100,4"
+                              fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+        </section>
+
+        <!-- ===== Two-column: Chart + Comments ===== -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+
+            <div class="card-dim lg:col-span-2 rounded-2xl p-6 elev-3">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-[#0B3B8C]">Publishing Activity</h2>
+                        <p class="text-xs text-slate-500">Last 7 days · articles published</p>
+                    </div>
+                    <div class="flex gap-1">
+                        <button class="range-btn text-xs font-bold px-3 py-1.5 rounded-full bg-[#1A56DB] text-white" data-range="7">7D</button>
+                        <button class="range-btn text-xs font-bold px-3 py-1.5 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300" data-range="30">30D</button>
+                    </div>
+                </div>
+                <div class="relative">
+                    <canvas id="activityChart" height="180"></canvas>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400 mt-2 px-1" id="chartLabels"></div>
+            </div>
+
+            <div class="card-dim rounded-2xl p-6 elev-3 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-[#0B3B8C]">Comments</h2>
+                        <p class="text-[11px] text-slate-500 mt-0.5">
+                            <span id="commentCount" class="font-semibold text-[#0B3B8C]">0</span> total ·
+                            <span id="commentDupCount" class="font-semibold text-amber-600">0</span> repeated
+                        </p>
+                    </div>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 live-dot"></span>
+                </div>
+
+                <ul id="commentList" class="space-y-2.5 text-sm overflow-y-auto pr-1" style="max-height: 320px;"></ul>
+            </div>
+        </section>
+
+        <!-- ============ AUTHOR MANAGEMENT ============ -->
+        <section class="card-dim rounded-2xl p-6 elev-3 mb-6">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                    <h2 class="text-lg font-bold text-[#0B3B8C]">Manage Authors</h2>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Add or remove newsroom authors</p>
+                </div>
+                <span id="authorCount" class="text-[10px] font-bold text-[#0B3B8C] bg-white/70 px-2 py-0.5 rounded border border-[#D7DCE5]">4 total</span>
+            </div>
+
+            <form id="addAuthorForm" class="flex gap-2 mb-4">
+                <input id="newAuthorName" type="text" placeholder="Author name" required
+                       class="flex-1 text-sm px-3 py-2 rounded-lg border border-[#D7DCE5] bg-white/70
+                              focus:outline-none focus:border-[#1A56DB] focus:ring-2 focus:ring-[#1A56DB]/20">
+                <button type="submit"
+                        class="md-btn px-4 py-2 rounded-lg bg-[#1A56DB] text-white text-xs font-bold elev-1">
+                    + Add Author
+                </button>
+            </form>
+
+            <ul id="topAuthors" class="space-y-2.5 overflow-y-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-2.5" style="max-height: 320px;"></ul>
+        </section>
+
+        <!-- ===== Bottom row: Recent Activity + System Health ===== -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+
+            <div class="card-dim rounded-2xl p-6 elev-3">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-[#0B3B8C]">Recent Activity</h2>
+                        <p class="text-[11px] text-slate-500 mt-0.5">
+                            <span id="dupSummary" class="font-semibold text-amber-600">0</span> repeated event(s) flagged
+                        </p>
+                    </div>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 live-dot"></span>
+                </div>
+                <ul id="activityList" class="space-y-2.5 text-sm overflow-y-auto pr-1" style="max-height: 380px;"></ul>
+            </div>
+
+            <div class="card-dim rounded-2xl p-6 elev-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-[#0B3B8C]">System Health</h2>
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50/80 px-2 py-0.5 rounded">ALL GOOD</span>
+                </div>
+                <div id="healthList" class="space-y-4"></div>
+            </div>
+        </section>
+
+        <section class="mt-6 card-dim rounded-2xl p-6 elev-3">
+            <h2 class="text-xl font-bold text-[#0B3B8C]">Welcome back, co-admin.</h2>
+            <p class="text-slate-600 mt-2 leading-relaxed">
+                Everything is live. Users comment freely — the Comments panel shows a
+                <strong>×N badge</strong> on every repeated comment so duplicates stand out at a glance.
+                Use the <strong>Manage Authors</strong> section to add or remove newsroom authors.
+            </p>
+        </section>
+
+    </main>
+
+    <script>
+        /* ============================================================
+           Animated counters
+        ============================================================ */
+        function animateCounters() {
+            document.querySelectorAll('.counter').forEach(el => {
+                const target = +el.dataset.target;
+                const duration = 1200;
+                const start = performance.now();
+                function tick(now) {
+                    const p = Math.min((now - start) / duration, 1);
+                    const eased = 1 - Math.pow(1 - p, 3);
+                    el.textContent = Math.floor(eased * target).toLocaleString();
+                    if (p < 1) requestAnimationFrame(tick);
+                    else el.textContent = target.toLocaleString();
+                }
+                requestAnimationFrame(tick);
+            });
+        }
+        animateCounters();
+
+        /* ============================================================
+           Mini bar chart
+        ============================================================ */
+        const chart = document.getElementById('activityChart');
+        const ctx = chart.getContext('2d');
+        const labelBox = document.getElementById('chartLabels');
+
+        const data7  = [8, 14, 10, 18, 12, 22, 16];
+        const data30 = Array.from({ length: 30 }, () => Math.floor(Math.random() * 20) + 4);
+        let currentRange = 7;
+
+        function drawChart(data) {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = chart.getBoundingClientRect();
+            chart.width = rect.width * dpr;
+            chart.height = 180 * dpr;
+            ctx.scale(dpr, dpr);
+
+            const w = rect.width, h = 180;
+            ctx.clearRect(0, 0, w, h);
+
+            const max = Math.max(...data) * 1.15;
+            const barW = (w / data.length) * 0.6;
+            const gap  = (w / data.length) * 0.4;
+
+            data.forEach((v, i) => {
+                const barH = (v / max) * (h - 20);
+                const x = i * (barW + gap) + gap / 2;
+                const y = h - barH - 4;
+
+                const grad = ctx.createLinearGradient(0, y, 0, h);
+                grad.addColorStop(0, '#1A56DB');
+                grad.addColorStop(1, '#93B4F5');
+                ctx.fillStyle = grad;
+
+                const r = Math.min(barW / 2, 6);
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + barW - r, y);
+                ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+                ctx.lineTo(x + barW, h);
+                ctx.lineTo(x, h);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+                ctx.fill();
+            });
+        }
+
+        function renderLabels(range) {
+            const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            let labels = [];
+            if (range === 7) labels = days;
+            else for (let i = 1; i <= 30; i += 5) labels.push('D' + i);
+            labelBox.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+        }
+
+        function setRange(range) {
+            currentRange = range;
+            document.querySelectorAll('.range-btn').forEach(b => {
+                if (+b.dataset.range === range) {
+                    b.classList.add('bg-[#1A56DB]', 'text-white');
+                    b.classList.remove('bg-slate-200', 'text-slate-600', 'hover:bg-slate-300');
+                } else {
+                    b.classList.remove('bg-[#1A56DB]', 'text-white');
+                    b.classList.add('bg-slate-200', 'text-slate-600', 'hover:bg-slate-300');
+                }
+            });
+            drawChart(range === 7 ? data7 : data30);
+            renderLabels(range);
+        }
+
+        document.querySelectorAll('.range-btn').forEach(b => {
+            b.addEventListener('click', () => setRange(+b.dataset.range));
+        });
+        window.addEventListener('resize', () => drawChart(currentRange === 7 ? data7 : data30));
+
+        /* ============================================================
+           COMMENTS PANEL with ×N duplicate grading
+        ============================================================ */
+        const comments = [
+            { author: 'Bikash Rai',       text: 'Great coverage on the budget article!',         time: '5 min ago' },
+            { author: 'Anita Shrestha',   text: 'Can you add more details about the road works?', time: '12 min ago' },
+            { author: 'Suman Gurung',     text: 'Thanks for the update — very helpful.',          time: '1 hr ago' },
+            { author: 'Anonymous',        text: 'Buy cheap followers here!',                      time: '2 hr ago' },
+            { author: 'Prakash Adhikari', text: 'Please verify the exam date.',                   time: '3 hr ago' },
+            { author: 'Bikash Rai',       text: 'Great coverage on the budget article!',         time: '3 hr ago' },
+            { author: 'Nisha Tamang',     text: 'Love the local focus of this portal.',           time: '5 hr ago' },
+            { author: 'Deepak Bhandari',  text: 'Any updates on the Bagmati bridge?',             time: '7 hr ago' },
+            { author: 'Anita Shrestha',   text: 'Can you add more details about the road works?', time: '8 hr ago' },
+            { author: 'Anonymous',        text: 'Buy cheap followers here!',                      time: '9 hr ago' },
+            { author: 'Bikash Rai',       text: 'Great coverage on the budget article!',         time: '10 hr ago' },
+            { author: 'Anonymous',        text: 'Buy cheap followers here!',                      time: '11 hr ago' },
+        ];
+
+        const commentListEl = document.getElementById('commentList');
+        const commentCountEl = document.getElementById('commentCount');
+        const commentDupCountEl = document.getElementById('commentDupCount');
+
+        const commentKey = c => c.author.trim().toLowerCase() + '::' + c.text.trim().toLowerCase();
+
+        function renderComments() {
+            commentListEl.innerHTML = '';
+
+            const freq = {};
+            comments.forEach(c => {
+                const k = commentKey(c);
+                freq[k] = (freq[k] || 0) + 1;
+            });
+
+            const repeatedGroups = Object.values(freq).filter(n => n > 1).length;
+
+            commentCountEl.textContent = comments.length;
+            commentDupCountEl.textContent = repeatedGroups;
+            commentDupCountEl.className = repeatedGroups > 0
+                ? 'font-semibold text-amber-600'
+                : 'font-semibold text-emerald-600';
+
+            if (comments.length === 0) {
+                commentListEl.innerHTML = `<li class="text-center text-slate-400 text-xs py-6">No comments yet.</li>`;
+                return;
+            }
+
+            comments.forEach((c, i) => {
+                const k = commentKey(c);
+                const count = freq[k];
+                const isDup = count > 1;
+
+                const li = document.createElement('li');
+                li.className = 'fade-in rounded-lg p-2.5 border ' +
+                    (isDup ? 'comment-dup' : 'bg-white/60 border-[#D7DCE5]');
+                li.style.animationDelay = (i * 35) + 'ms';
+
+                const badgeColor = isDup
+                    ? 'bg-amber-100 text-amber-800 border-amber-300 count-badge'
+                    : 'bg-slate-100 text-slate-600 border-slate-300';
+
+                li.innerHTML = `
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="text-xs font-bold text-slate-800 truncate">${c.author}</span>
+                            <span class="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded border ${badgeColor} flex-shrink-0"
+                                  title="${isDup ? 'Repeated comment' : 'Unique comment'}">×${count}</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 flex-shrink-0">${c.time}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-snug">${c.text}</p>
+                `;
+                commentListEl.appendChild(li);
+            });
+        }
+
+        renderComments();
+
+        /* ============================================================
+           AUTHOR MANAGEMENT (add / remove)
+        ============================================================ */
+        let authors = [
+            { id: 1, name: 'Sita Sharma',  posts: 142, avatar: 'SS', color: '#1A56DB' },
+            { id: 2, name: 'Ram Thapa',    posts: 118, avatar: 'RT', color: '#059669' },
+            { id: 3, name: 'Gita Karki',   posts: 94,  avatar: 'GK', color: '#D97706' },
+            { id: 4, name: 'Hari Gurung',  posts: 76,  avatar: 'HG', color: '#7C3AED' },
+        ];
+        const palette = ['#1A56DB', '#059669', '#D97706', '#7C3AED', '#DC2626', '#0891B2', '#4F46E5', '#DB2777'];
+        let nextAuthorId = 5;
+
+        const authorsEl = document.getElementById('topAuthors');
+        const authorCountEl = document.getElementById('authorCount');
+        const statAuthorsEl = document.getElementById('statAuthors');
+
+        function initials(name) {
+            return name.trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
+        }
+        function colorFor(id) { return palette[id % palette.length]; }
+
+        function renderAuthors() {
+            authorsEl.innerHTML = '';
+            if (authors.length === 0) {
+                authorsEl.innerHTML = `<li class="text-center text-slate-400 text-xs py-6 md:col-span-2">No authors yet. Add one above.</li>`;
+                authorCountEl.textContent = '0 total';
+                return;
+            }
+            const max = Math.max(...authors.map(a => a.posts), 1);
+            authors.forEach((a, i) => {
+                const li = document.createElement('li');
+                li.className = 'author-row fade-in flex items-center gap-3 p-2 rounded-lg bg-white/50 border border-[#D7DCE5]';
+                li.style.animationDelay = (i * 40) + 'ms';
+                li.innerHTML = `
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold elev-1 flex-shrink-0"
+                         style="background-color:${a.color}">${a.avatar}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-1 gap-2">
+                            <span class="text-sm font-semibold text-slate-800 truncate">${a.name}</span>
+                            <span class="text-xs text-slate-500 font-medium flex-shrink-0">${a.posts}</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-700"
+                                 style="width:${(a.posts / max) * 100}%; background-color:${a.color}"></div>
+                        </div>
+                    </div>
+                    <button class="author-remove text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md w-7 h-7 flex items-center justify-center text-base flex-shrink-0"
+                            title="Remove author" aria-label="Remove ${a.name}">✕</button>
+                `;
+                li.querySelector('.author-remove').addEventListener('click', () => {
+                    authors = authors.filter(x => x.id !== a.id);
+                    renderAuthors();
+                });
+                authorsEl.appendChild(li);
+            });
+            authorCountEl.textContent = authors.length + ' total';
+            if (statAuthorsEl) statAuthorsEl.dataset.target = authors.length;
+        }
+
+        document.getElementById('addAuthorForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('newAuthorName');
+            const name = input.value.trim();
+            if (!name) return;
+            authors.push({
+                id: nextAuthorId++,
+                name,
+                posts: 0,
+                avatar: initials(name),
+                color: colorFor(nextAuthorId)
+            });
+            input.value = '';
+            renderAuthors();
+        });
+
+        renderAuthors();
+
+        /* ============================================================
+           DUPLICATE-AWARE ACTIVITY FEED
+        ============================================================ */
+        const rawActivities = [
+            { icon: '📝', text: 'Sita Sharma submitted "Budget 2082 explained"', time: '2 min ago' },
+            { icon: '📝', text: 'Sita Sharma submitted "Budget 2082 explained"', time: '3 min ago' },
+            { icon: '✅', text: 'Ram Thapa approved "Kathmandu road works update"', time: '14 min ago' },
+            { icon: '📥', text: '3 new articles pending review', time: '1 hr ago' },
+            { icon: '✅', text: 'Ram Thapa approved "Kathmandu road works update"', time: '1 hr ago' },
+            { icon: '👤', text: 'New author registered: Gita Karki', time: '2 hr ago' },
+            { icon: '🚀', text: 'Article published to Bagmati feed', time: '3 hr ago' },
+            { icon: '📥', text: '3 new articles pending review', time: '4 hr ago' },
+            { icon: '📝', text: 'Sita Sharma submitted "Budget 2082 explained"', time: '5 hr ago' },
+        ];
+
+        const keyOf = a => a.icon + '::' + a.text;
+        const freq = {};
+        rawActivities.forEach(a => { const k = keyOf(a); freq[k] = (freq[k] || 0) + 1; });
+
+        const acknowledged = new Set();
+        const activityList = document.getElementById('activityList');
+        const dupSummary = document.getElementById('dupSummary');
+
+        function renderActivities() {
+            activityList.innerHTML = '';
+            let flaggedCount = 0;
+
+            rawActivities.forEach((a, i) => {
+                const k = keyOf(a);
+                const count = freq[k];
+                const isDup = count > 1;
+                const isAck = acknowledged.has(i);
+
+                if (isDup && !isAck) flaggedCount++;
+
+                const li = document.createElement('li');
+                li.className = 'fade-in flex items-start gap-3 cursor-pointer p-2 rounded-lg ' +
+                    (isDup && !isAck ? 'activity-dup' : 'bg-white/40 border border-transparent');
+                li.style.animationDelay = (i * 50) + 'ms';
+
+                let badge = '';
+                if (isDup) {
+                    const statusText = isAck ? '✓ Acknowledged' : `Repeated ×${count}`;
+                    const badgeColor = isAck
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200 count-badge';
+                    badge = `<span class="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded border ${badgeColor} ml-1">${statusText}</span>`;
+                }
+
+                li.innerHTML = `
+                    <span class="text-lg leading-none mt-0.5">${a.icon}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-slate-700 leading-snug ${isAck ? 'line-through decoration-emerald-400/60 decoration-1' : ''}">
+                            ${a.text}${badge}
+                        </p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">${a.time}</p>
+                    </div>
+                `;
+
+                if (isDup) {
+                    li.addEventListener('click', () => {
+                        if (acknowledged.has(i)) acknowledged.delete(i);
+                        else acknowledged.add(i);
+                        renderActivities();
+                    });
+                    li.title = isAck ? 'Click to un-acknowledge' : 'Click to acknowledge this duplicate';
+                }
+
+                activityList.appendChild(li);
+            });
+
+            dupSummary.textContent = flaggedCount;
+            dupSummary.className = flaggedCount > 0
+                ? 'font-semibold text-amber-600'
+                : 'font-semibold text-emerald-600';
+        }
+
+        renderActivities();
+
+        /* ============================================================
+           System Health
+        ============================================================ */
+        const health = [
+            { label: 'API Response', value: 92, status: 'Healthy', color: '#059669' },
+            { label: 'Database Load', value: 68, status: 'Moderate', color: '#D97706' },
+            { label: 'Storage Used', value: 41, status: 'Healthy', color: '#1A56DB' },
+            { label: 'Uptime (30d)', value: 99, status: 'Excellent', color: '#059669' },
+        ];
+
+        const healthList = document.getElementById('healthList');
+        health.forEach((h, i) => {
+            const div = document.createElement('div');
+            div.className = 'fade-in';
+            div.style.animationDelay = (i * 90) + 'ms';
+            div.innerHTML = `
+                <div class="flex justify-between text-sm mb-1.5">
+                    <span class="font-semibold text-slate-700">${h.label}</span>
+                    <span class="font-medium" style="color:${h.color}">${h.value}% · ${h.status}</span>
+                </div>
+                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-1000"
+                         style="width:${h.value}%; background-color:${h.color}"></div>
+                </div>
+            `;
+            healthList.appendChild(div);
+        });
+
+        /* ============================================================
+           Other buttons
+        ============================================================ */
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            animateCounters();
+            setRange(currentRange);
+            acknowledged.clear();
+            renderActivities();
+            renderAuthors();
+            renderComments();
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            alert('Export started — your CSV will download shortly.');
+        });
+
+        requestAnimationFrame(() => {
+            drawChart(data7);
+            renderLabels(7);
+        });
+    </script>
+
+</body>
+</html>

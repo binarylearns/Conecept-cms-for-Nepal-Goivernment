@@ -1,0 +1,245 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restricted Access · {{ SITE_NAME|default:"Nepal Police" }}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0A0303;
+            background-image: radial-gradient(
+                ellipse at center,
+                rgba(139, 0, 0, .25) 0%,
+                transparent 70%
+            );
+            min-height: 100vh;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 30px rgba(220, 38, 38, .15),
+                            inset 0 0 30px rgba(220, 38, 38, .05);
+            }
+            50% {
+                box-shadow: 0 0 50px rgba(220, 38, 38, .35),
+                            inset 0 0 40px rgba(220, 38, 38, .1);
+            }
+        }
+
+        .panel {
+            background: rgba(15, 3, 3, .95);
+            border: 1px solid #991B1B;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: .2; }
+        }
+
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        .field {
+            background: rgba(0, 0, 0, .5);
+            border: 1px solid #7F1D1D;
+            color: #FCA5A5;
+            font-family: 'Courier New', monospace;
+        }
+
+        .field:focus {
+            outline: none;
+            border-color: #DC2626;
+            box-shadow: 0 0 15px rgba(220, 38, 38, .3);
+        }
+
+        .field::placeholder {
+            color: rgba(220, 38, 38, .4);
+        }
+
+        .btn {
+            background: #991B1B;
+            border: 1px solid #DC2626;
+            color: #FEE2E2;
+            transition: all .2s ease;
+        }
+
+        .btn:hover {
+            background: #DC2626;
+            box-shadow: 0 0 20px rgba(220, 38, 38, .5);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn:disabled {
+            opacity: .65;
+            cursor: wait;
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center p-4">
+
+    <main class="w-full max-w-sm">
+        <section class="panel rounded-lg p-8">
+
+            <header class="text-center mb-6">
+                <div
+                    class="mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3"
+                    style="border: 2px solid #DC2626; background: rgba(220,38,38,.1);"
+                >
+                    <span class="text-red-500 text-2xl font-black">!</span>
+                </div>
+
+                <h1 class="text-2xl font-black text-red-500 tracking-widest">
+                    ACCESS DENIED
+                </h1>
+
+                <p class="text-[10px] text-red-700 tracking-[0.3em] mt-1 blink">
+                    RESTRICTED
+                </p>
+            </header>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div
+                        role="alert"
+                        class="mb-3 text-xs text-red-400 text-center px-3 py-2 border border-red-800 bg-red-950/50 rounded"
+                    >
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if access_denied %}
+                <p role="alert" class="mb-4 text-xs text-red-400 text-center">
+                    Your account does not have co-admin access.
+                    Please use an authorized account.
+                </p>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div
+                    role="alert"
+                    class="mb-3 text-xs text-red-400 text-center px-3 py-2 border border-red-800 bg-red-950/50 rounded"
+                >
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% if not forloop.last %}<br>{% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form
+                id="loginForm"
+                method="post"
+                action="{% url 'coadmin:login' %}"
+                class="space-y-4"
+            >
+                {% csrf_token %}
+
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
+                <div>
+                    <label
+                        for="{{ form.username.id_for_label }}"
+                        class="block text-[10px] text-red-600 tracking-widest mb-1.5"
+                    >
+                        OPERATOR ID
+                    </label>
+
+                    <input
+                        type="text"
+                        name="{{ form.username.html_name }}"
+                        id="{{ form.username.id_for_label }}"
+                        value="{{ form.username.value|default:'' }}"
+                        autocomplete="username"
+                        autofocus
+                        required
+                        class="field w-full px-3 py-2.5 rounded text-sm"
+                        placeholder="ENTER ID"
+                    >
+
+                    {% if form.username.errors %}
+                        <p class="text-xs text-red-500 mt-1">
+                            {{ form.username.errors.0 }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label
+                        for="{{ form.password.id_for_label }}"
+                        class="block text-[10px] text-red-600 tracking-widest mb-1.5"
+                    >
+                        ACCESS CODE
+                    </label>
+
+                    <input
+                        type="password"
+                        name="{{ form.password.html_name }}"
+                        id="{{ form.password.id_for_label }}"
+                        autocomplete="current-password"
+                        required
+                        class="field w-full px-3 py-2.5 rounded text-sm"
+                        placeholder="ENTER PASSWORD"
+                    >
+
+                    {% if form.password.errors %}
+                        <p class="text-xs text-red-500 mt-1">
+                            {{ form.password.errors.0 }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <button
+                    id="submitBtn"
+                    type="submit"
+                    class="btn w-full py-3 rounded text-xs font-bold tracking-widest uppercase"
+                >
+                    AUTHENTICATE
+                </button>
+            </form>
+
+            <p class="text-center text-[10px] text-red-700 mt-4 tracking-widest">
+                SECURE AUTHENTICATION
+            </p>
+
+        </section>
+
+        <footer class="text-center text-[9px] text-red-900 tracking-[0.2em] mt-4 uppercase">
+            {{ SITE_NAME|default:"Nepal Police" }} · Restricted · {% now "Y" %}
+        </footer>
+    </main>
+
+    <script>
+        const form = document.getElementById("loginForm");
+        const button = document.getElementById("submitBtn");
+
+        form.addEventListener("submit", function () {
+            if (form.checkValidity()) {
+                button.textContent = "AUTHENTICATING...";
+                button.disabled = true;
+            }
+        });
+
+        window.addEventListener("pageshow", function () {
+            button.textContent = "AUTHENTICATE";
+            button.disabled = false;
+        });
+    </script>
+
+</body>
+</html>
+```

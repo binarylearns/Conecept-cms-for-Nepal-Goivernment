@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>न्यूजपोर्टल · लेखक कार्यक्षेत्र</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --surface: #F7F8FA;
+            --border-soft: #E2E6EC;
+            --blue: #1A56DB;
+            --blue-dark: #0B3B8C;
+            --blue-light: #E8EFFF;
+            --text-main: #1E293B;
+        }
+
+        body {
+            -webkit-font-smoothing: antialiased;
+            font-family: 'Mukta', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--surface);
+            color: var(--text-main);
+        }
+
+        .elev-1 { box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 1px 3px rgba(15,23,42,.04); }
+        .elev-2 { box-shadow: 0 2px 4px rgba(15,23,42,.08), 0 1px 6px rgba(15,23,42,.05); }
+        .elev-3 { box-shadow: 0 4px 8px rgba(15,23,42,.10), 0 2px 12px rgba(15,23,42,.06); }
+
+        .card {
+            background: #fff;
+            border: 1px solid var(--border-soft);
+            border-radius: 1rem;
+            transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+        }
+        .card-hover:hover {
+            box-shadow: 0 8px 20px rgba(15,23,42,.10), 0 4px 24px rgba(15,23,42,.06);
+            transform: translateY(-2px);
+            border-color: #C7D2FE;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: .5; transform: scale(1.4); }
+        }
+        .live-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn .4s ease forwards; }
+
+        .md-field {
+            background: #fff;
+            border: 1.5px solid var(--border-soft);
+            border-radius: .625rem;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .md-field:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(26,86,219,.15);
+            outline: none;
+        }
+
+        .md-btn {
+            position: relative; overflow: hidden;
+            transition: box-shadow .18s ease, transform .12s ease, background-color .18s ease;
+        }
+        .md-btn:hover { transform: translateY(-1px); }
+        .md-btn:active { transform: translateY(0); }
+        .md-btn::after {
+            content: ""; position: absolute; inset: 0;
+            background: white; opacity: 0; transition: opacity .2s ease;
+        }
+        .md-btn:active::after { opacity: .15; transition: none; }
+
+        .status-pill {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            letter-spacing: .03em;
+            display: inline-block;
+        }
+        .status-draft     { background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; }
+        .status-pending   { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
+        .status-published { background: #D1FAE5; color: #047857; border: 1px solid #6EE7B7; }
+        .status-scheduled { background: #E8EFFF; color: #1A56DB; border: 1px solid #C7D2FE; }
+        .status-rejected  { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
+
+        .tab-btn { position: relative; transition: color .18s ease; }
+        .tab-btn.active { color: var(--blue-dark); }
+        .tab-btn.active::after {
+            content: ""; position: absolute; left: 0; right: 0; bottom: -9px;
+            height: 3px; background: var(--blue); border-radius: 3px;
+        }
+
+        .timer-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 52px;
+            padding: 8px 6px;
+            border-radius: 10px;
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.18);
+        }
+        .timer-num {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
+        }
+        .timer-label {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.65);
+            margin-top: 3px;
+        }
+
+        /* Language toggle */
+        .lang-toggle {
+            display: inline-flex;
+            background: #EEF1F6;
+            border-radius: 9999px;
+            padding: 3px;
+            position: relative;
+            border: 1px solid var(--border-soft);
+        }
+        .lang-toggle button {
+            position: relative;
+            z-index: 1;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            transition: color .2s ease;
+            color: #64748B;
+        }
+        .lang-toggle button.active { color: #fff; }
+        .lang-slider {
+            position: absolute;
+            top: 3px;
+            bottom: 3px;
+            width: calc(50% - 3px);
+            background: var(--blue);
+            border-radius: 9999px;
+            transition: left .25s cubic-bezier(.4,0,.2,1);
+            z-index: 0;
+            box-shadow: 0 1px 3px rgba(26,86,219,.3);
+        }
+
+        /* Logout — warm, distinct but calm */
+        .logout-btn {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #B91C1C;
+            transition: background-color .18s ease, border-color .18s ease, transform .12s ease;
+        }
+        .logout-btn:hover {
+            background: #FEE2E2;
+            border-color: #FCA5A5;
+            transform: translateY(-1px);
+        }
+        .logout-btn:active { transform: translateY(0); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: rgba(26,86,219,.25); border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body class="min-h-screen">
+
+    <!-- ============ TOP APP BAR ============ -->
+    <header class="sticky top-0 z-40 bg-white border-b border-[#E2E6EC] elev-1">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1A56DB] to-[#0B3B8C] flex items-center justify-center elev-2">
+                    <span class="font-black text-white text-sm tracking-tighter">NP</span>
+                </div>
+                <div class="leading-tight">
+                    <h1 class="text-base sm:text-lg font-extrabold text-[#0B3B8C] tracking-tight" data-i18n="brand">न्यूजपोर्टल</h1>
+                    <p class="text-[11px] text-slate-500" data-i18n="brandSub">लेखक कार्यक्षेत्र</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Language toggle -->
+                <div class="lang-toggle" id="langToggle" role="group" aria-label="Language switcher">
+                    <div class="lang-slider" id="langSlider" style="left: 3px;"></div>
+                    <button data-lang="en" class="lang-btn">EN</button>
+                    <button data-lang="ne" class="lang-btn active">नेपाली</button>
+                </div>
+
+                <!-- New post button (desktop only) -->
+                <button id="newPostBtn"
+                        class="md-btn px-3.5 py-2 rounded-lg bg-[#1A56DB] text-white text-xs font-bold elev-2 hidden sm:block"
+                        data-i18n="newPost">+ नयाँ पोस्ट</button>
+
+                <!-- User chip + Logout -->
+                <div class="flex items-center gap-2 pl-2 border-l border-[#E2E6EC]">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#1A56DB] to-[#0B3B8C] flex items-center justify-center text-white text-xs font-bold elev-1">
+                        A
+                    </div>
+                    <div class="hidden md:block leading-tight">
+                        <p class="text-xs font-bold text-slate-800" data-i18n="authorLabel">लेखक</p>
+                        <p class="text-[10px] text-slate-400" data-i18n="signedIn">साइन इन</p>
+                    </div>
+
+                    <!-- Logout button (icon-only on mobile) -->
+                    <button id="logoutBtn"
+                            class="logout-btn ml-1 px-2.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5"
+                            aria-label="Logout">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        <span class="hidden sm:inline" data-i18n="logout">लगआउट</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-4 sm:p-6">
+
+        <!-- ============ COMPACT STAT CHIPS ============ -->
+        <section class="flex flex-wrap items-center gap-2 mb-5">
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-[#E2E6EC] elev-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#1A56DB]"></span>
+                <span class="text-[11px] font-semibold text-slate-500" data-i18n="chipPosts">पोस्ट</span>
+                <span class="text-sm font-extrabold text-[#0B3B8C] tabular-nums" id="chipPosts">24</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-[#E2E6EC] elev-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#7C3AED]"></span>
+                <span class="text-[11px] font-semibold text-slate-500" data-i18n="chipVisitors">दर्शक</span>
+                <span class="text-sm font-extrabold text-[#7C3AED] tabular-nums" id="chipVisitors">8,452</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-[#E2E6EC] elev-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span class="text-[11px] font-semibold text-slate-500" data-i18n="chipPublished">प्रकाशित</span>
+                <span class="text-sm font-extrabold text-emerald-600 tabular-nums">18</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-[#E2E6EC] elev-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                <span class="text-[11px] font-semibold text-slate-500" data-i18n="chipReview">समीक्षामा</span>
+                <span class="text-sm font-extrabold text-amber-600 tabular-nums">3</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-[#E2E6EC] elev-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#1A56DB]"></span>
+                <span class="text-[11px] font-semibold text-slate-500" data-i18n="chipScheduled">अनुसूचित</span>
+                <span class="text-sm font-extrabold text-[#1A56DB] tabular-nums">2</span>
+            </div>
+        </section>
+
+        <!-- ============ NEXT UPLOAD TIMER (HERO) ============ -->
+        <section class="rounded-2xl p-5 sm:p-6 mb-5 elev-3 fade-in"
+                 style="background-image: linear-gradient(135deg, #0B3B8C 0%, #1A56DB 100%); color:#fff;">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <p class="text-[11px] font-bold uppercase tracking-widest text-blue-200 flex items-center gap-2 mb-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot"></span>
+                        <span data-i18n="nextUpload">अर्को अनुसूचित अपलोड</span>
+                    </p>
+                    <h2 class="text-lg sm:text-xl font-extrabold tracking-tight" id="nextUploadTitle">
+                        "काठमाडौं सडक विस्तार — पूर्ण समयरेखा"
+                    </h2>
+                    <p class="text-xs text-blue-100/80 mt-1" data-i18n="nextUploadSub">
+                        स्वचालित रूपमा अपलोड हुन्छ · त्यससम्म सम्पादन गर्न सकिन्छ
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-2" id="countdown" aria-live="polite">
+                    <div class="timer-box">
+                        <span class="timer-num" id="tDays">00</span>
+                        <span class="timer-label" data-i18n="days">दिन</span>
+                    </div>
+                    <div class="timer-box">
+                        <span class="timer-num" id="tHours">00</span>
+                        <span class="timer-label" data-i18n="hrs">घण्टा</span>
+                    </div>
+                    <div class="timer-box">
+                        <span class="timer-num" id="tMinutes">00</span>
+                        <span class="timer-label" data-i18n="min">मिनेट</span>
+                    </div>
+                    <div class="timer-box">
+                        <span class="timer-num" id="tSeconds">00</span>
+                        <span class="timer-label" data-i18n="sec">सेकेन्ड</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ MAIN GRID ============ -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+
+            <div class="lg:col-span-2 card elev-3 p-5 sm:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-[#0B3B8C]" data-i18n="createPost">पोस्ट बनाउनुहोस्</h2>
+                        <p class="text-[11px] text-slate-500 mt-0.5" data-i18n="createPostSub">लेख्नुहोस्, तालिका बनाउनुहोस् वा ड्राफ्ट सुरक्षित गर्नुहोस्</p>
+                    </div>
+                </div>
+
+                <form id="createPostForm" class="space-y-3">
+                    <input id="postTitle" type="text" data-i18n-ph="titlePh" placeholder="लेखको शीर्षक…" required
+                           class="md-field w-full px-4 py-2.5 text-sm font-semibold">
+
+                    <textarea id="postSummary" rows="3" data-i18n-ph="summaryPh" placeholder="छोटो सारांश वा मुख्य अनुच्छेद…"
+                              class="md-field w-full px-4 py-2.5 text-sm resize-none"></textarea>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <select id="postCategory" class="md-field px-4 py-2.5 text-sm cursor-pointer">
+                            <option data-i18n-opt="catEconomy">अर्थतन्त्र</option>
+                            <option data-i18n-opt="catInfra">पूर्वाधार</option>
+                            <option data-i18n-opt="catEdu">शिक्षा</option>
+                            <option data-i18n-opt="catEnv">वातावरण</option>
+                            <option data-i18n-opt="catComm">समुदाय</option>
+                            <option data-i18n-opt="catTraffic">यातायात</option>
+                            <option data-i18n-opt="catCulture">संस्कृति</option>
+                        </select>
+                        <input id="postSchedule" type="datetime-local"
+                               class="md-field px-4 py-2.5 text-sm text-slate-600">
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <button type="button" id="saveDraftBtn"
+                                class="md-btn flex-1 min-w-[120px] px-4 py-2.5 rounded-lg bg-white text-[#0B3B8C] text-sm font-bold border border-[#C7D2FE]"
+                                data-i18n="saveDraft">💾 ड्राफ्ट सुरक्षित</button>
+                        <button type="button" id="scheduleBtn"
+                                class="md-btn flex-1 min-w-[120px] px-4 py-2.5 rounded-lg bg-[#E8EFFF] text-[#0B3B8C] text-sm font-bold border border-[#C7D2FE]"
+                                data-i18n="scheduleBtn">🕒 तालिका बनाउनुहोस्</button>
+                        <button type="submit"
+                                class="md-btn flex-1 min-w-[120px] px-4 py-2.5 rounded-lg bg-[#1A56DB] text-white text-sm font-bold elev-2"
+                                data-i18n="publishNow">🚀 अहिले प्रकाशित</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card elev-3 p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-base font-bold text-[#0B3B8C]" data-i18n="scheduledTitle">अनुसूचित</h2>
+                    <span class="text-[10px] font-bold text-[#1A56DB] bg-[#E8EFFF] px-2 py-0.5 rounded border border-[#C7D2FE]" id="scheduledCount">2</span>
+                </div>
+                <ul id="scheduledList" class="space-y-2"></ul>
+            </div>
+        </section>
+
+        <!-- ============ DRAFTS ============ -->
+        <section class="card elev-3 p-5 sm:p-6 mb-5">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-[#0B3B8C]" data-i18n="draftsTitle">ड्राफ्टहरू</h2>
+                    <p class="text-[11px] text-slate-500 mt-0.5" data-i18n="draftsSub">जहाँ छोड्नुभयो त्यहीँबाट जारी राख्नुहोस्</p>
+                </div>
+                <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded" id="draftCount">2</span>
+            </div>
+            <div id="draftCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </section>
+
+        <!-- ============ MY POSTS ============ -->
+        <section class="card elev-3 p-5 sm:p-6 mb-5">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h2 class="text-lg font-bold text-[#0B3B8C]" data-i18n="myPosts">मेरा पोस्टहरू</h2>
+                <div class="flex gap-1 bg-[#EEF1F6] p-1 rounded-full flex-wrap">
+                    <button class="tab-btn active text-xs font-bold px-3 py-1 rounded-full" data-tab="all" data-i18n="tabAll">सबै</button>
+                    <button class="tab-btn text-xs font-bold px-3 py-1 rounded-full text-slate-500" data-tab="draft" data-i18n="tabDraft">ड्राफ्ट</button>
+                    <button class="tab-btn text-xs font-bold px-3 py-1 rounded-full text-slate-500" data-tab="pending" data-i18n="tabPending">समीक्षा</button>
+                    <button class="tab-btn text-xs font-bold px-3 py-1 rounded-full text-slate-500" data-tab="scheduled" data-i18n="tabScheduled">अनुसूचित</button>
+                    <button class="tab-btn text-xs font-bold px-3 py-1 rounded-full text-slate-500" data-tab="published" data-i18n="tabPublished">प्रकाशित</button>
+                </div>
+            </div>
+            <ul id="articleList" class="space-y-2.5"></ul>
+        </section>
+
+        <!-- ============ FEEDBACK ============ -->
+        <section class="card elev-3 p-5 sm:p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-[#0B3B8C]" data-i18n="feedbackTitle">पाठक र सम्पादक प्रतिक्रिया</h2>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        <span id="feedbackCount" class="font-semibold text-[#1A56DB]">0</span>
+                        <span data-i18n="feedbackSub">तपाईंका लेखमा टिप्पणीहरू</span>
+                    </p>
+                </div>
+                <span class="w-2 h-2 rounded-full bg-emerald-500 live-dot"></span>
+            </div>
+            <ul id="feedbackList" class="space-y-2.5"></ul>
+        </section>
+
+    </main>
+
+    <footer class="max-w-6xl mx-auto px-4 py-6 text-center text-xs text-slate-400">
+        <span data-i18n="footer">न्यूजपोर्टल · लेखक कार्यक्षेत्र · तपाईंका शब्दहरू, संसारका लागि।</span>
+    </footer>
+
+    <!-- ============ LOGOUT CONFIRM MODAL ============ -->
+    <div id="logoutModal" class="hidden fixed inset-0 z-50 items-center justify-center p-4"
+         style="background: rgba(11,15,25,.55); backdrop-filter: blur(4px);">
+        <div class="bg-white w-full max-w-sm rounded-2xl elev-3 border border-[#E2E6EC] overflow-hidden fade-in">
+            <div class="px-5 py-4 border-b border-[#E2E6EC] flex items-center gap-3"
+                 style="background-image: linear-gradient(90deg, #FEF2F2 0%, #FFFFFF 100%);">
+                <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                         fill="none" stroke="#B91C1C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                </div>
+                <h3 class="text-base font-extrabold text-red-700" data-i18n="logoutTitle">लगआउट गर्ने?</h3>
+            </div>
+            <div class="p-5">
+                <p class="text-sm text-slate-600 leading-relaxed mb-5" data-i18n="logoutBody">
+                    तपाईं लेखक कार्यक्षेत्रबाट साइन आउट हुनुहुनेछ। सुरक्षित नगरिएका परिवर्तनहरू हराउनेछन्।
+                </p>
+                <div class="flex gap-2">
+                    <button id="cancelLogout"
+                            class="md-btn flex-1 px-4 py-2.5 rounded-lg border border-[#E2E6EC] bg-[#F7F8FA]
+                                   text-sm font-semibold text-slate-700 hover:bg-slate-200"
+                            data-i18n="cancel">रद्द गर्नुहोस्</button>
+                    <button id="confirmLogout"
+                            class="md-btn flex-1 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700
+                                   text-sm font-bold text-white elev-2"
+                            data-i18n="confirmLogout">हो, लगआउट</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ============================================================
+           i18n DICTIONARY
+        ============================================================ */
+        const i18n = {
+            en: {
+                brand: "NewsPortal",
+                brandSub: "Author Workspace",
+                newPost: "+ New Post",
+                authorLabel: "Author",
+                signedIn: "Signed in",
+                logout: "Logout",
+                logoutTitle: "Log out?",
+                logoutBody: "You'll be signed out of the author workspace. Any unsaved changes will be lost.",
+                cancel: "Cancel",
+                confirmLogout: "Yes, log out",
+                chipPosts: "Posts",
+                chipVisitors: "Visitors",
+                chipPublished: "Published",
+                chipReview: "In review",
+                chipScheduled: "Scheduled",
+                nextUpload: "Next scheduled upload",
+                nextUploadSub: "Uploads automatically · you can still edit until then",
+                days: "Days", hrs: "Hrs", min: "Min", sec: "Sec",
+                createPost: "Create post",
+                createPostSub: "Write, schedule, or save as draft",
+                titlePh: "Article title…",
+                summaryPh: "Short summary or lead paragraph…",
+                catEconomy: "Economy", catInfra: "Infrastructure", catEdu: "Education",
+                catEnv: "Environment", catComm: "Community", catTraffic: "Traffic", catCulture: "Culture",
+                saveDraft: "💾 Save draft",
+                scheduleBtn: "🕒 Schedule",
+                publishNow: "🚀 Publish now",
+                scheduledTitle: "Scheduled",
+                draftsTitle: "Drafts",
+                draftsSub: "Pick up where you left off",
+                myPosts: "My posts",
+                tabAll: "All", tabDraft: "Drafts", tabPending: "Review",
+                tabScheduled: "Scheduled", tabPublished: "Published",
+                feedbackTitle: "Reader & Editor Feedback",
+                feedbackSub: "comments on your articles",
+                footer: "NewsPortal · Author Workspace · Your words, their world.",
+                statusDraft: "draft", statusPending: "pending", statusPublished: "published",
+                statusScheduled: "scheduled", statusRejected: "rejected",
+                noneInCategory: "No articles in this category yet.",
+                nothingScheduled: "Nothing scheduled.",
+                noDrafts: "No drafts. Start a new one above!",
+                words: "words", complete: "% complete", continue: "Continue →",
+                editor: "EDITOR", reader: "READER",
+                justNow: "just now", notSet: "not set · choose a date",
+                articleTitles: [
+                    "Budget 2082: What it means for local businesses",
+                    "Kathmandu road expansion — full timeline",
+                    "Bagmati cleanup drive: volunteer guide",
+                    "New education policy explained in 5 points",
+                    "Interview: Local farmer on climate change",
+                    "Traffic advisory: Ring Road closures this week",
+                    "Tihar festival: how local markets are preparing",
+                    "Tihar market prices — what to expect",
+                    "Community library reopens in Bhaktapur",
+                    "Flood alert: Bagmati river levels rising"
+                ],
+                nextUploadTitle: '"Kathmandu road expansion — full timeline"',
+                scheduledItems: [
+                    { title: "Kathmandu road expansion — full timeline", when: "in 2 days · 08:30" },
+                    { title: "Tihar market prices — what to expect",      when: "tomorrow · 10:00" }
+                ],
+                draftItems: [
+                    { title: "Bagmati cleanup drive: volunteer guide",     words: 480, updated: "3 hr ago" },
+                    { title: "Interview: Local farmer on climate change", words: 210, updated: "1 hr ago" }
+                ],
+                feedbackItems: [
+                    { from: "Editor", text: "Great angle on the budget piece. Could you add one more local quote?", time: "20 min ago", type: "editor" },
+                    { from: "Bikash Rai", text: "Very informative, thanks for writing this!", time: "2 hr ago", type: "reader" },
+                    { from: "Anita Shrestha", text: "Could you cover the impact on small shops next?", time: "5 hr ago", type: "reader" },
+                    { from: "Editor", text: "Road expansion article is approved. Publishing tomorrow morning.", time: "1 day ago", type: "editor" }
+                ]
+            },
+            ne: {
+                brand: "न्यूजपोर्टल",
+                brandSub: "लेखक कार्यक्षेत्र",
+                newPost: "+ नयाँ पोस्ट",
+                authorLabel: "लेखक",
+                signedIn: "साइन इन",
+                logout: "लगआउट",
+                logoutTitle: "लगआउट गर्ने?",
+                logoutBody: "तपाईं लेखक कार्यक्षेत्रबाट साइन आउट हुनुहुनेछ। सुरक्षित नगरिएका परिवर्तनहरू हराउनेछन्।",
+                cancel: "रद्द गर्नुहोस्",
+                confirmLogout: "हो, लगआउट",
+                chipPosts: "पोस्ट",
+                chipVisitors: "दर्शक",
+                chipPublished: "प्रकाशित",
+                chipReview: "समीक्षामा",
+                chipScheduled: "अनुसूचित",
+                nextUpload: "अर्को अनुसूचित अपलोड",
+                nextUploadSub: "स्वचालित रूपमा अपलोड हुन्छ · त्यससम्म सम्पादन गर्न सकिन्छ",
+                days: "दिन", hrs: "घण्टा", min: "मिनेट", sec: "सेकेन्ड",
+                createPost: "पोस्ट बनाउनुहोस्",
+                createPostSub: "लेख्नुहोस्, तालिका बनाउनुहोस् वा ड्राफ्ट सुरक्षित गर्नुहोस्",
+                titlePh: "लेखको शीर्षक…",
+                summaryPh: "छोटो सारांश वा मुख्य अनुच्छेद…",
+                catEconomy: "अर्थतन्त्र", catInfra: "पूर्वाधार", catEdu: "शिक्षा",
+                catEnv: "वातावरण", catComm: "समुदाय", catTraffic: "यातायात", catCulture: "संस्कृति",
+                saveDraft: "💾 ड्राफ्ट सुरक्षित",
+                scheduleBtn: "🕒 तालिका बनाउनुहोस्",
+                publishNow: "🚀 अहिले प्रकाशित",
+                scheduledTitle: "अनुसूचित",
+                draftsTitle: "ड्राफ्टहरू",
+                draftsSub: "जहाँ छोड्नुभयो त्यहीँबाट जारी राख्नुहोस्",
+                myPosts: "मेरा पोस्टहरू",
+                tabAll: "सबै", tabDraft: "ड्राफ्ट", tabPending: "समीक्षा",
+                tabScheduled: "अनुसूचित", tabPublished: "प्रकाशित",
+                feedbackTitle: "पाठक र सम्पादक प्रतिक्रिया",
+                feedbackSub: "तपाईंका लेखमा टिप्पणीहरू",
+                footer: "न्यूजपोर्टल · लेखक कार्यक्षेत्र · तपाईंका शब्दहरू, संसारका लागि।",
+                statusDraft: "ड्राफ्ट", statusPending: "समीक्षामा", statusPublished: "प्रकाशित",
+                statusScheduled: "अनुसूचित", statusRejected: "अस्वीकृत",
+                noneInCategory: "यो श्रेणीमा अहिलेसम्म कुनै लेख छैन।",
+                nothingScheduled: "केही पनि अनुसूचित छैन।",
+                noDrafts: "कुनै ड्राफ्ट छैन। माथिबाट नयाँ सुरु गर्नुहोस्!",
+                words: "शब्द", complete: "% पूरा", continue: "जारी राख्नुहोस् →",
+                editor: "सम्पादक", reader: "पाठक",
+                justNow: "भर्खरै", notSet: "सेट छैन · मिति छान्नुहोस्",
+                articleTitles: [
+                    "बजेट २०८२: स्थानीय व्यवसायका लागि यसको अर्थ",
+                    "काठमाडौं सडक विस्तार — पूर्ण समयरेखा",
+                    "बागमती सफाई अभियान: स्वयंसेवक मार्गदर्शन",
+                    "नयाँ शिक्षा नीति ५ बुँदामा व्याख्या",
+                    "अन्तर्वार्ता: जलवायु परिवर्तनमा स्थानीय किसान",
+                    "यातायात सूचना: यस हप्ता रिङ रोड बन्द",
+                    "तिहार चाड: स्थानीय बजारहरू कसरी तयारी गर्दैछन्",
+                    "तिहार बजार मूल्य — के अपेक्षा गर्ने",
+                    "भक्तपुरमा सामुदायिक पुस्तकालय पुनः खुल्यो",
+                    "बाढी सतर्कता: बागमती नदीको सतह बढ्दै"
+                ],
+                nextUploadTitle: '"काठमाडौं सडक विस्तार — पूर्ण समयरेखा"',
+                scheduledItems: [
+                    { title: "काठमाडौं सडक विस्तार — पूर्ण समयरेखा", when: "२ दिनमा · ०८:३०" },
+                    { title: "तिहार बजार मूल्य — के अपेक्षा गर्ने", when: "भोलि · १०:००" }
+                ],
+                draftItems: [
+                    { title: "बागमती सफाई अभियान: स्वयंसेवक मार्गदर्शन", words: 480, updated: "३ घण्टा अघि" },
+                    { title: "अन्तर्वार्ता: जलवायु परिवर्तनमा स्थानीय किसान", words: 210, updated: "१ घण्टा अघि" }
+                ],
+                feedbackItems: [
+                    { from: "सम्पादक", text: "बजेट लेखको कोण राम्रो छ। एक थप स्थानीय उद्धरण थप्नुहोस्।", time: "२० मिनेट अघि", type: "editor" },
+                    { from: "विकास राई", text: "धेरै जानकारीपूर्ण, लेख्नुभएकोमा धन्यवाद!", time: "२ घण्टा अघि", type: "reader" },
+                    { from: "अनिता श्रेष्ठ", text: "अर्को पटक साना पसलहरूमा पर्ने प्रभाव समेट्नुहोस्।", time: "५ घण्टा अघि", type: "reader" },
+                    { from: "सम्पादक", text: "सडक विस्तार लेख स्वीकृत भयो। भोलि बिहान प्रकाशित हुनेछ।", time: "१ दिन अघि", type: "editor" }
+                ]
+            }
+        };
+
+        let currentLang = 'ne';
+
+        /* ============================================================
+           DATA
+        ============================================================ */
+        const articles = [
+            { key: 0, status: 'published', views: 1240, date: '2 days ago',  dateNe: '२ दिन अघि', categoryKey: 'catEconomy' },
+            { key: 1, status: 'scheduled', views: 0,    date: 'in 2 days',  dateNe: '२ दिनमा',    categoryKey: 'catInfra' },
+            { key: 2, status: 'draft',     views: 0,    date: '3 hr ago',   dateNe: '३ घण्टा अघि', categoryKey: 'catEnv' },
+            { key: 3, status: 'published', views: 892,  date: '5 days ago', dateNe: '५ दिन अघि',  categoryKey: 'catEdu' },
+            { key: 4, status: 'draft',     views: 0,    date: '1 hr ago',   dateNe: '१ घण्टा अघि', categoryKey: 'catComm' },
+            { key: 5, status: 'rejected',  views: 0,    date: '6 days ago', dateNe: '६ दिन अघि',  categoryKey: 'catTraffic' },
+            { key: 6, status: 'published', views: 2104, date: '1 week ago', dateNe: '१ हप्ता अघि', categoryKey: 'catCulture' },
+            { key: 7, status: 'scheduled', views: 0,    date: 'in 1 day',   dateNe: '१ दिनमा',    categoryKey: 'catEconomy' },
+            { key: 8, status: 'pending',   views: 0,    date: '1 day ago',  dateNe: '१ दिन अघि',  categoryKey: 'catComm' },
+            { key: 9, status: 'pending',   views: 0,    date: '6 hr ago',   dateNe: '६ घण्टा अघि', categoryKey: 'catEnv' },
+        ];
+
+        let scheduled = [...i18n.ne.scheduledItems];
+        let drafts = [
+            { title: i18n.ne.draftItems[0].title, progress: 60, words: 480, updated: i18n.ne.draftItems[0].updated },
+            { title: i18n.ne.draftItems[1].title, progress: 25, words: 210, updated: i18n.ne.draftItems[1].updated }
+        ];
+
+        /* ============================================================
+           RENDER FUNCTIONS
+        ============================================================ */
+        const T = () => i18n[currentLang];
+
+        const articleListEl = document.getElementById('articleList');
+        const scheduledListEl = document.getElementById('scheduledList');
+        const scheduledCountEl = document.getElementById('scheduledCount');
+        const draftCardsEl = document.getElementById('draftCards');
+        const draftCountEl = document.getElementById('draftCount');
+        const feedbackListEl = document.getElementById('feedbackList');
+        const feedbackCountEl = document.getElementById('feedbackCount');
+        const nextUploadTitleEl = document.getElementById('nextUploadTitle');
+
+        let activeTab = 'all';
+
+        function statusPill(status) {
+            const map = {
+                draft: 'status-draft', pending: 'status-pending', published: 'status-published',
+                scheduled: 'status-scheduled', rejected: 'status-rejected'
+            };
+            const labelMap = {
+                draft: T().statusDraft, pending: T().statusPending, published: T().statusPublished,
+                scheduled: T().statusScheduled, rejected: T().statusRejected
+            };
+            return `<span class="status-pill ${map[status]}">${labelMap[status]}</span>`;
+        }
+
+        function renderArticles() {
+            articleListEl.innerHTML = '';
+            const filtered = activeTab === 'all'
+                ? articles
+                : articles.filter(a => a.status === activeTab);
+
+            if (filtered.length === 0) {
+                articleListEl.innerHTML = `<li class="text-center py-8 text-slate-400 text-sm">${T().noneInCategory}</li>`;
+                return;
+            }
+
+            filtered.forEach((a, i) => {
+                const li = document.createElement('li');
+                li.className = 'fade-in p-3 rounded-lg border border-[#E2E6EC] hover:border-[#C7D2FE] hover:bg-[#F7FAFF] transition-all cursor-pointer';
+                li.style.animationDelay = (i * 35) + 'ms';
+                const title = T().articleTitles[a.key];
+                const date = currentLang === 'ne' ? a.dateNe : a.date;
+                const cat = T()[a.categoryKey];
+                li.innerHTML = `
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                ${statusPill(a.status)}
+                                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">${cat}</span>
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-800 leading-snug truncate">${title}</h3>
+                            <div class="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400">
+                                <span>📅 ${date}</span>
+                                ${a.views > 0 ? `<span>👁 ${a.views.toLocaleString()} views</span>` : ''}
+                            </div>
+                        </div>
+                        <span class="text-slate-300 flex-shrink-0 mt-1">›</span>
+                    </div>
+                `;
+                articleListEl.appendChild(li);
+            });
+        }
+
+        function renderScheduled() {
+            scheduledListEl.innerHTML = '';
+            scheduledCountEl.textContent = scheduled.length;
+
+            if (scheduled.length === 0) {
+                scheduledListEl.innerHTML = `<li class="text-center text-slate-400 text-xs py-6">${T().nothingScheduled}</li>`;
+                return;
+            }
+            scheduled.forEach((s, i) => {
+                const li = document.createElement('li');
+                li.className = 'fade-in p-3 rounded-lg bg-[#F7FAFF] border border-[#C7D2FE] flex items-start gap-2';
+                li.style.animationDelay = (i * 50) + 'ms';
+                li.innerHTML = `
+                    <span class="w-8 h-8 rounded-lg bg-[#E8EFFF] text-[#1A56DB] flex items-center justify-center text-sm flex-shrink-0">🕒</span>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-bold text-slate-800 leading-snug truncate">${s.title}</p>
+                        <p class="text-[10px] text-[#1A56DB] font-semibold mt-1">${s.when}</p>
+                    </div>
+                `;
+                scheduledListEl.appendChild(li);
+            });
+        }
+
+        function renderDrafts() {
+            draftCardsEl.innerHTML = '';
+            draftCountEl.textContent = drafts.length;
+
+            if (drafts.length === 0) {
+                draftCardsEl.innerHTML = `<p class="text-center text-slate-400 text-sm py-6 col-span-full">${T().noDrafts}</p>`;
+                return;
+            }
+            drafts.forEach((d, i) => {
+                const div = document.createElement('div');
+                div.className = 'fade-in p-4 rounded-xl bg-[#F7FAFF] border border-[#C7D2FE] hover:shadow-md transition-shadow cursor-pointer';
+                div.style.animationDelay = (i * 60) + 'ms';
+                div.innerHTML = `
+                    <h3 class="text-sm font-bold text-slate-800 mb-2 leading-snug line-clamp-2">${d.title}</h3>
+                    <div class="flex items-center justify-between text-[11px] text-slate-500 mb-2">
+                        <span>${d.words} ${T().words}</span>
+                        <span>${d.updated}</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-[#E2E6EC] rounded-full overflow-hidden">
+                        <div class="h-full rounded-full bg-gradient-to-r from-[#1A56DB] to-[#7C3AED] transition-all duration-700"
+                             style="width:${d.progress}%"></div>
+                    </div>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-[10px] font-bold text-[#1A56DB]">${d.progress}${T().complete}</span>
+                        <span class="text-[10px] font-bold text-[#1A56DB] hover:underline">${T().continue}</span>
+                    </div>
+                `;
+                draftCardsEl.appendChild(div);
+            });
+        }
+
+        function renderFeedback() {
+            feedbackListEl.innerHTML = '';
+            const fb = T().feedbackItems;
+            feedbackCountEl.textContent = fb.length;
+
+            fb.forEach((f, i) => {
+                const li = document.createElement('li');
+                li.className = 'fade-in p-3 rounded-lg border border-[#E2E6EC] bg-white';
+                li.style.animationDelay = (i * 40) + 'ms';
+                const typeColor = f.type === 'editor'
+                    ? 'bg-[#E8EFFF] text-[#0B3B8C] border-[#C7D2FE]'
+                    : 'bg-slate-50 text-slate-600 border-slate-200';
+                const typeLabel = f.type === 'editor' ? T().editor : T().reader;
+                li.innerHTML = `
+                    <div class="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-800">${f.from}</span>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${typeColor}">${typeLabel}</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400">${f.time}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">${f.text}</p>
+                `;
+                feedbackListEl.appendChild(li);
+            });
+        }
+
+        /* ============================================================
+           APPLY LANGUAGE
+        ============================================================ */
+        function applyLanguage(lang) {
+            currentLang = lang;
+            const t = i18n[lang];
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (t[key] !== undefined) el.textContent = t[key];
+            });
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.dataset.i18nPh;
+                if (t[key] !== undefined) el.placeholder = t[key];
+            });
+            document.querySelectorAll('[data-i18n-opt]').forEach(el => {
+                const key = el.dataset.i18nOpt;
+                if (t[key] !== undefined) el.textContent = t[key];
+            });
+
+            nextUploadTitleEl.textContent = t.nextUploadTitle;
+
+            renderArticles();
+            renderScheduled();
+            renderDrafts();
+            renderFeedback();
+
+            document.documentElement.lang = lang;
+
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.lang === lang);
+            });
+            const slider = document.getElementById('langSlider');
+            slider.style.left = lang === 'en' ? '3px' : 'calc(50% + 0px)';
+        }
+
+        /* ============================================================
+           LANGUAGE TOGGLE
+        ============================================================ */
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+        });
+
+        /* ============================================================
+           LOGOUT (confirm modal)
+        ============================================================ */
+        const logoutModal = document.getElementById('logoutModal');
+
+        function openLogout() {
+            logoutModal.classList.remove('hidden');
+            logoutModal.classList.add('flex');
+        }
+        function closeLogout() {
+            logoutModal.classList.add('hidden');
+            logoutModal.classList.remove('flex');
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', openLogout);
+        document.getElementById('cancelLogout').addEventListener('click', closeLogout);
+        logoutModal.addEventListener('click', (e) => {
+            if (e.target === logoutModal) closeLogout();
+        });
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLogout();
+        });
+
+        document.getElementById('confirmLogout').addEventListener('click', () => {
+            // Placeholder — wire to your real auth session teardown
+            closeLogout();
+            // Example: window.location.href = '/login';
+            alert(currentLang === 'ne' ? 'लगआउट भयो (डेमो)। /login मा रिडिरेक्ट गर्नुहोस्।'
+                                       : 'Logged out (demo). Redirect to /login here.');
+        });
+
+        /* ============================================================
+           COUNTDOWN
+        ============================================================ */
+        let nextUploadTime = Date.now() + (2 * 24 * 60 * 60 * 1000) + (7 * 60 * 60 * 1000) + (42 * 60 * 1000);
+        const tDays = document.getElementById('tDays');
+        const tHours = document.getElementById('tHours');
+        const tMinutes = document.getElementById('tMinutes');
+        const tSeconds = document.getElementById('tSeconds');
+        const pad = n => String(n).padStart(2, '0');
+
+        function tickCountdown() {
+            let diff = Math.max(0, nextUploadTime - Date.now());
+            const d = Math.floor(diff / 86400000); diff -= d * 86400000;
+            const h = Math.floor(diff / 3600000);  diff -= h * 3600000;
+            const m = Math.floor(diff / 60000);    diff -= m * 60000;
+            const s = Math.floor(diff / 1000);
+            tDays.textContent = pad(d);
+            tHours.textContent = pad(h);
+            tMinutes.textContent = pad(m);
+            tSeconds.textContent = pad(s);
+        }
+        tickCountdown();
+        setInterval(tickCountdown, 1000);
+
+        /* ============================================================
+           TABS
+        ============================================================ */
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                activeTab = btn.dataset.tab;
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.toggle('active', b === btn);
+                    b.classList.toggle('text-slate-500', b !== btn);
+                });
+                renderArticles();
+            });
+        });
+
+        /* ============================================================
+           CREATE POST actions
+        ============================================================ */
+        const postTitle = document.getElementById('postTitle');
+        const postSummary = document.getElementById('postSummary');
+        const postCategory = document.getElementById('postCategory');
+        const postSchedule = document.getElementById('postSchedule');
+
+        function clearForm() {
+            postTitle.value = '';
+            postSummary.value = '';
+            postCategory.selectedIndex = 0;
+            postSchedule.value = '';
+        }
+
+        document.getElementById('saveDraftBtn').addEventListener('click', () => {
+            if (!postTitle.value.trim()) { postTitle.focus(); return; }
+            drafts.unshift({
+                title: postTitle.value.trim(),
+                progress: 10,
+                words: (postSummary.value.trim().split(/\s+/).filter(Boolean).length) || 0,
+                updated: T().justNow
+            });
+            renderDrafts();
+            clearForm();
+        });
+
+        document.getElementById('scheduleBtn').addEventListener('click', () => {
+            if (!postTitle.value.trim()) { postTitle.focus(); return; }
+            const when = postSchedule.value
+                ? new Date(postSchedule.value).toLocaleString(currentLang === 'ne' ? 'ne-NP' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })
+                : T().notSet;
+            scheduled.unshift({ title: postTitle.value.trim(), when });
+            renderScheduled();
+            clearForm();
+        });
+
+        document.getElementById('createPostForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!postTitle.value.trim()) { postTitle.focus(); return; }
+            const idx = articles.length;
+            i18n.en.articleTitles.push(postTitle.value.trim());
+            i18n.ne.articleTitles.push(postTitle.value.trim());
+            articles.unshift({
+                key: idx,
+                status: 'pending',
+                views: 0,
+                date: 'just now',
+                dateNe: 'भर्खरै',
+                categoryKey: 'catComm'
+            });
+            renderArticles();
+            clearForm();
+        });
+
+        document.getElementById('newPostBtn').addEventListener('click', () => {
+            postTitle.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        /* ============================================================
+           Visitors tick (cosmetic)
+        ============================================================ */
+        (function visitorsTick() {
+            const el = document.getElementById('chipVisitors');
+            let base = 8452;
+            setInterval(() => {
+                if (Math.random() > 0.6) {
+                    base += Math.floor(Math.random() * 3) + 1;
+                    el.textContent = base.toLocaleString('en-IN');
+                }
+            }, 6000);
+        })();
+
+        /* ============================================================
+           INIT
+        ============================================================ */
+        applyLanguage('ne');
+    </script>
+
+</body>
+</html>
